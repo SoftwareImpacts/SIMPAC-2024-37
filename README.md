@@ -1,2 +1,2 @@
 # PyRCD
-Structural Design Optimization Package
+Structural Design and Optimization of Reinforced Concrete Element
