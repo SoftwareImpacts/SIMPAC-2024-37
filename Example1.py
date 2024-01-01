@@ -1,6 +1,6 @@
 #Example 1: Analysis of fixed Beam With multiple point loads using :class:`StrucPy.RCFA.RCF`.
 
-from PyRCD import RCbeam
+from PyRCD.RCbeam import RCbeam
 import pandas as pd
 import plotly
 

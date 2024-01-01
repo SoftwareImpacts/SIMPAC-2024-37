@@ -1,1 +1,1 @@
-from PyRCD.RCbeam import RCbeam
+from PyRCD import RCbeam
