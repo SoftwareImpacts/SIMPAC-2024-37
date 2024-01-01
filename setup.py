@@ -1,5 +1,6 @@
 import pathlib
 from setuptools import setup
+from setuptools import find_packages
 
 # The directory containing this file
 HERE = pathlib.Path(__file__).parent
@@ -21,7 +22,10 @@ setup(
     classifiers=[
         "Programming Language :: Python :: 3.10.7",
     ],
-    packages=["PyRCD"],
+    # packages=["PyRCD"],
+    packages=find_packages(include=['PyRCD', 'PyRCD.*']),
+    # package_dir={'': 'src/PyRCD'},
+    
     include_package_data=False,
     install_requires=["numpy", "pandas", "plotly"]
 )

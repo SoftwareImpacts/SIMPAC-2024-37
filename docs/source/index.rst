@@ -1,15 +1,20 @@
-.. PyRCD documentation master file, created by
-   sphinx-quickstart on Wed Dec 20 16:15:36 2023.
+.. StrucPy documentation master file, created by
+   sphinx-quickstart on Sat May 27 11:48:43 2023.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
 Welcome to PyRCD's documentation!
-=================================
+===================================
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 4
    :caption: Contents:
 
+   Overview of PyRCD
+   usage
+   Class Variables
+   modules
+   Examples
 
 
 Indices and tables

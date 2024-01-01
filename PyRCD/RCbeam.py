@@ -172,8 +172,10 @@ class RCbeam():
         self.rebar_config()
 
         self.top_bars_frame= pd.DataFrame()
-        self.bottom_bars_frame= pd.DataFrame()
-        self.beam_shear_detail_frame= pd.DataFrame()
+        # self.bottom_bars_frame= pd.DataFrame()
+        # self.beam_shear_detail_frame= pd.DataFrame()
+        self.plotting_status= False
+        self.optimization_status= False
 
     def check_beam(self):
         """This function of :class:`PyRCD.RCbeam` objects performs design check for reinforced concrete beam for the given crosssection, rebars and foces provided by user. It also suggest improvement if beam fails in some checks. 
@@ -209,8 +211,10 @@ class RCbeam():
                 self.beam_status[["Rebar_Check"]]= "Pass"
         
         self.__shear_check()
+        self.rebar_detail= "Designing Not done. Please perform Design first."
+        self.shear_detail= "Designing Not done. Please perform Design first."
 
-        return (self.beam_status)
+        # return (self.beam_status)
 
     def dsgbeam(self):
         """This function of :class:`PyRCD.RCbeam` objects performs design for reinforced concrete beam for the given cross-section and foces. It check the provided depth and evaluates the reinforcement bars and combination along with shear bars. 
@@ -227,12 +231,12 @@ class RCbeam():
                 print ("Beam failed in lateral statbility. Increase the width of the beam.")
 
             if self.beam_status.iloc[0,2] == "Fail":
-                print ("Beam failed in moment. More depth and width is required, increase the depth or width of the beam.")
+                print ("Beam failed in moment check. More depth and width is required, increase the depth or width of the beam.")
 
             if self.beam_status.iloc[0,4] == "Fail":
                 print ("Beam failed in reinforcement requirement as its more than the maximum limit. More depth or width is required, increase the depth or width or grade of concrete or grade of steel of the beam.")
 
-            raise Exception(" Beam design has failed in the safety checks. Increase the dimension of the beam.")
+            raise Exception(" Beam design has failed in the safety checks. Increase the dimension of the RC beam.")
 
         self.__rebars_design()
         self.beam_status[["Rebar_Check"]]= "Pass"
@@ -242,9 +246,8 @@ class RCbeam():
         if self.beam_status.iloc[0,5] == "Fail":
             raise Exception("Beam has failed in shear. Required shear stress is more than maximum allowed. Increase the width or depth of the beam")
 
-        # self.shear_detail= self.__shear_bars_design()
-
-        return (self.beam_status, self.rebar_detail,self.beam_shear_detail )
+        self.plotting_status= True
+        self.__objCalculation()
 
     def __check_cross_section (self, bb=None, dd=None):
         
@@ -466,6 +469,8 @@ class RCbeam():
 
         self.beam_shear_detail= pd.concat([self.beam_shear_detail, beam_shear_detail ])
 
+        self.shear_detail= self.beam_shear_detail.copy()
+
 
     def __rebars_design(self):
 
@@ -473,7 +478,6 @@ class RCbeam():
         self.top_bars= pd.DataFrame()
         self.bottom_bars= pd.DataFrame()
 
-        print ("Width= ",self.b, ", Depth= ", self.d, ", Ast= ", self.Ast, ", Max_bar= ",self.max_bars  )
         for ii,i in enumerate (self.Ast):
             
             Design_Cost_rebar= self.__tension_rebar_design(i,self.max_bars[ii])           #, Design_Build_rebar
@@ -482,42 +486,57 @@ class RCbeam():
 
             Design_Cost_rebar_pd= pd.concat([Design_Cost_rebar_pd, Design_Cost_rebar])
 
+        self.REBAR_CHECK= Design_Cost_rebar_pd
+
         self.DCRpd= Design_Cost_rebar_pd
         top_bars_pd = Design_Cost_rebar_pd.iloc[1:,:]
         bottom_bars_pd = Design_Cost_rebar_pd.iloc[0,:].to_frame().T
         
-
         top_bars= Design_Cost_rebar_pd.iloc[1:,5:]
+        top_bars_np= top_bars.iloc[:,0:6].to_numpy()
 
-        if top_bars.iat[0,1] >=2:
-            top_left = top_bars.iat[0,0] 
+        x_len,y_len= np.shape(top_bars_np)
+        success= False
 
-        if top_bars.iat[0,1] <2 and top_bars.iat[0,3] >=2:
-            top_left = top_bars.iat[0,2]
+        for ii in range (0,y_len,2):
+            for jj in range (0,y_len,2):
+                if top_bars_np[0,ii+1]>=2:
+                    if top_bars_np[0,ii]== top_bars_np[1,jj]:
+                        if top_bars_np[1,jj+1]>=2:
+                            success= True
+                            common_bar= top_bars_np[0,ii]
+                            continous_bar = top_bars_np[0,ii]
 
-        if top_bars.iat[0,1] <2 and top_bars.iat[0,3] <2 and top_bars.iat[0,5] >=2:
-            top_left = top_bars.iat[0,5]
+        if success==False:
+            if top_bars.iat[0,1] >=2:
+                top_left = top_bars.iat[0,0] 
+
+            if top_bars.iat[0,1] <2 and top_bars.iat[0,3] >=2:
+                top_left = top_bars.iat[0,2]
+
+            if top_bars.iat[0,1] <2 and top_bars.iat[0,3] <2 and top_bars.iat[0,5] >=2:
+                top_left = top_bars.iat[0,4]
 
 
-        if top_bars.iat[1,1] >=2:
-            top_right = top_bars.iat[1,0] 
+            if top_bars.iat[1,1] >=2:
+                top_right = top_bars.iat[1,0] 
 
-        if top_bars.iat[1,1] <2 and top_bars.iat[1,3] >=2:
-            top_right = top_bars.iat[0,2]
+            if top_bars.iat[1,1] <2 and top_bars.iat[1,3] >=2:
+                top_right = top_bars.iat[1,2]
 
-        if top_bars.iat[1,1] <2 and top_bars.iat[1,3] <2 and top_bars.iat[1,5] >=2:
-            top_right = top_bars.iat[1,5]
+            if top_bars.iat[1,1] <2 and top_bars.iat[1,3] <2 and top_bars.iat[1,5] >=2:
+                top_right = top_bars.iat[1,4]
         
 
-        success = False
-
-
-        if top_left <= top_right: 
-            continous_bar = top_left
-            success= True
-        else: 
-            continous_bar = top_right
-            success= True      
+            if top_left < top_right: 
+                common_bar= top_left
+                continous_bar = top_left
+                to_be_fixed= 2
+            
+            if top_left > top_right: 
+                common_bar= top_right
+                continous_bar = top_right
+                to_be_fixed= 1
         
 
         if success== True:
@@ -526,6 +545,7 @@ class RCbeam():
             top_bars_pd.loc[:,["Continous Bar"]]= continous_bar
             top_bars_pd.loc[:,["Number of Bars"]]= 2
             
+
             for i in range (5,11,2):
                 if bottom_bars_pd.iat[0, i+1] >=2:
                     min_size_bottom= bottom_bars_pd.iat[0,i]
@@ -535,17 +555,18 @@ class RCbeam():
             bottom_bars_pd.loc[:,["Number of Bars"]]= 2
 
         if success == False:
-            print ("Check Line 699 as its not getting optmized if its reaching here")
-            DCR= self.__tension_rebar_design(self.Ast[2],self.max_bars[2],top_left )
+            # print ("Check Line 699 as its not getting optmized if its reaching here")
+            DCR= self.__tension_rebar_design(self.Ast[to_be_fixed],self.max_bars[to_be_fixed],common_bar )
 
-            self.DCR= DCR
-            self.TBP= top_bars_pd
-            top_bars_pd.iloc[1,:]= DCR.iloc[0,:]
-            top_left = top_bars_pd.iat[0,5]
+            # self.DCR= DCR
+            # self.TBP= top_bars_pd
+
+            top_bars_pd.iloc[to_be_fixed-1,:]= DCR.iloc[0,:]
+            # top_left = top_bars_pd.iat[0,5]
 
             top_bars_pd.loc[:, ["Continous Bar","Number of Bars"]]= " "
             bottom_bars_pd.loc[:, ["Continous Bar","Number of Bars"]]= " "            
-            top_bars_pd.loc[:,["Continous Bar"]]= top_left
+            top_bars_pd.loc[:,["Continous Bar"]]= continous_bar
             top_bars_pd.loc[:,["Number of Bars"]]= 2
 
             for i in range (5,11,2):
@@ -565,7 +586,8 @@ class RCbeam():
 
         self.pt= ((100*self.rebar_detail['Total_Area (mm2)']/(self.b*self.d))).to_list()
 
-        self.side_bar_detail= "Not Required"
+        self.side_bar_detail= 0
+
         if self.side_bar== True:          
             
             area_required= 0.05*self.b*(self.total_depth)/1000
@@ -599,6 +621,8 @@ class RCbeam():
 
         self.rebar_detail.iloc[0, 13] = self.Ldb
 
+        self.rebar_detail.index= [ "Bottom Rebar", "Top Left Support", "Top Right Support"]
+
 #------------------------------------------------------------------------------
 
     def __tension_rebar_design(self, Ast, max_bars, common= None):
@@ -616,10 +640,10 @@ class RCbeam():
         List_of_N_3 = list(itr.combinations(rebars_list, 3))    
         List_of_N= List_of_N_1 + List_of_N_2 + List_of_N_3
         
-        T0 = 1500
+        T0 = 2500
     
-        major = 100
-        minor = 25
+        major = 75
+        minor = 100
         alpha = 0.9988
         n = 1           # no of solutions accepted
         Temp = []
@@ -657,32 +681,23 @@ class RCbeam():
         
         rand1= [1,2,3,4,5,6]
         for i in range (major):
+            if len(List_of_N) < 2:
+                break
+
             for j in range (minor):
 
-                if len(List_of_N) < 1:
+                if len(List_of_N) < 2:
                     break
 
-                ran0 =  random.choice(rand1)
+                # ran0 =  random.choice(rand1)
 
                 if i==0 and j< len(List_of_N_1):
                     ran_1=0
-                    
                 else:
-                    if T0> 500:
-                        if ran0 >3:
-                            step_wise= 1*ran0
-                        else: 
-                            step_wise= -1*ran0
-
-                    if T0 < 500:
-                        if ran0 >3:
-                            step_wise= 1
-                        else: 
-                            step_wise= -1
-
-                    ran_1=  ran +  step_wise
+                    ran_1= random.randint(0,len(List_of_N)-1)  
 
                 if ran_1 > (len(List_of_N)-1) or ran_1<0:
+                    print ("Here")
                     continue
                 
 
@@ -1005,22 +1020,16 @@ class RCbeam():
         :rtype: List
         """
 
-        # b_range = np.arange(230, 701,1)
-        # b_range = b_range[((b_range[:]%nearest_value)==0)]   
-        # d_range = np.arange(250, 901,1)
-        # d_range = d_range[((d_range[:]%nearest_value)==0)]  
-        
-        # combs = np.array(np.meshgrid(b_range, d_range)).T.reshape(-1,2)
-        # combs= combs[combs[:,0]>(combs[:,1]*0.3)]
-        
-        b_range = np.arange(200, 250,1)
-        d_range = np.arange(450, 550,1) 
+        b_range = np.arange(200, 501,1)
+        b_range = b_range[((b_range[:]%nearest_value)==0)]   
+        d_range = np.arange(250, 651,1)
+        d_range = d_range[((d_range[:]%nearest_value)==0)]  
         
         combs = np.array(np.meshgrid(b_range, d_range)).T.reshape(-1,2)
         combs= combs[combs[:,0]>(combs[:,1]*0.3)]
-        combs= combs[combs[:,1]<=(combs[:,0]*2)]
-        combs= combs[combs[:,1]>=(combs[:,0]*1.5)]
-
+        combs= combs[combs[:,0]<(combs[:,1])]
+        
+        
         co= self.cover
         l= self.l
         T0 = 2500
@@ -1066,7 +1075,7 @@ class RCbeam():
             best_fitness= 0
             total_cost_list= []
             total_co2_list= []
-
+            
             for ran in ran_final:
                 b= combs[ran,0]
                 d= combs[ran,1]     
@@ -1123,8 +1132,7 @@ class RCbeam():
                         total_cost_list.append(total_cost)
                         total_co2_list.append(total_CO2)
 
-
-                        combs= np.delete(combs, ran, 0)
+                        # combs= np.delete(combs, ran, 0)
 
 
             for i in wt_f:
@@ -1143,16 +1151,14 @@ class RCbeam():
                 best_fitness3= total_co2_list[ind]
                 
                 ran= ran_final[ind]
-                combs= np.delete(combs, ran_final[ind], 0)
-                print (best_fitness1, best_fitness2, best_fitness3)
+                # combs= np.delete(combs, ran_final[ind], 0)
                 break
-            
-        print ("Working NEW")
 
         t1= time.time()
 
         set_status= 0
-        
+        Freeze= False
+
         while T0 > 10:
 
             if set_status== 1:
@@ -1160,16 +1166,19 @@ class RCbeam():
             else:
                 count = 1
 
+            if len(combs) < 2:
+                break
+
+            if Freeze==True:
+                break
+
             for j in range(minor):
                 count = count + 1 
                 
-                if len(combs) < 10:
+                if len(combs) == 1:
                     print ("Breaking Here")
+                    
                     break
-
-                
-
-                # np.random.randint(0,len(List_of_N))
 
 
                 if set_status ==1:
@@ -1229,11 +1238,11 @@ class RCbeam():
 
 
                                 total_cost_steel= self.Cost_steel* ((self.den_s* rebar_vol*100)+ (self.den_s* shearbar_vol*100))   #INR
-                                total_cost_concrete= self.Cost_concrete*conc_vol    #INR
+                                total_cost_concrete= self.Cost_concrete*net_conc_vol    #INR
                                 total_cost_formwork= self.Cost_formwork* ( (b*l/1000) + (2*((d+co)*l/1000)))
 
                                 total_CO2_steel= self.CO2_steel* ((self.den_s* rebar_vol*100)+ (self.den_s* shearbar_vol*100))   
-                                total_CO2_concrete= self.CO2_concrete*(self.den_c*100* conc_vol)    
+                                total_CO2_concrete= self.CO2_concrete*(self.den_c*100* net_conc_vol)    
                                 total_CO2_formwork= self.CO2_formwork * ( (b*l/1000) + (2*((d+co)*l/1000)))*(self.plywood_thickness/1000)*self.plywood_density
 
 
@@ -1243,16 +1252,6 @@ class RCbeam():
 
                                 total_volume= shearbar_vol + rebar_vol + net_conc_vol
 
-
-
-                                # total_cost_steel= self.Cost_steel* ((self.den_s* rebar_vol*100)+ (self.den_s* shearbar_vol*100))   #INR
-                                # total_cost_concrete= self.Cost_concrete*conc_vol    #INR
-
-                                # total_CO2_steel= self.CO2_steel* ((self.den_s* rebar_vol*100)+ (self.den_s* shearbar_vol*100))   #INR
-                                # total_CO2_concrete= self.CO2_concrete*(self.den_c*100* conc_vol)    #INR
-
-                                # total_cost= total_cost_steel+ total_cost_concrete
-                                # total_CO2= total_CO2_steel+ total_CO2_concrete
 
 
                 if total_weight < 0:
@@ -1265,8 +1264,8 @@ class RCbeam():
                 current_fitness2= total_cost
                 current_fitness3= total_CO2
 
-                if T0<1000:
-                    print (total_weight)
+                # if T0<1000:
+                #     print (total_weight)
 
                 E1 = (current_fitness1 - best_fitness1)
                 E2 = (current_fitness2 - best_fitness2)
@@ -1329,21 +1328,22 @@ class RCbeam():
                 min_weight= min(record_best_fitness1)
                 ind_min_weight= record_best_fitness1.index(min_weight)
                 ran= index_solution[ind_min_weight]
-                print ("Yes")
+                Freeze= True
+                
 
 
             if count == (minor+minor):
                 Freeze= True
-                print ("FREEZE")
-                print(T0)
                 break
 
             T0 = T0*alpha
             
-        t2= time.time()
-        print ("Time Taken= " , t2-t1 )                     
-        return solutions,record_best_fitness1,record_best_fitness2,record_best_fitness3,Temp
-    
+
+
+        self.optimization_result= pd.DataFrame({"Temp": Temp, "Weight (Kg)": record_best_fitness1, "Volume (m3)": self.total_vol_list, "Cost (INR)": record_best_fitness2, "CO2 (KgCO2e)": record_best_fitness3, "Solution": solutions, "Conc Vol (m3)": self.vol_concrete, "Rebar Vol (m3)": self.vol_rebar_steel, "Stirrup Vol (m3)": self.vol_stirrups, "Rebar Weight (Kg)": self.wt_rebar_steel, "Stirrup Weight (Kg)": self.wt_stirrups}  )
+   
+        self.plotting_status= True
+        self.optimization_status= True
 
     def crack_width(self, distance=None, acr= None):
         """This function of :class:`PyRCD.RCbeam` objects performs crock width calculation for reinforced concrete beam. 
@@ -1472,7 +1472,7 @@ class RCbeam():
         self.CO2_steel= 1.99                    # kgCO2e per kg
         self.CO2_formwork= 0.681                # kgCO2e per kg Plywood
 
-        self.defl_lim= min ((self.l*1000/350),20)                                      #Deflection Limit
+        self.defl_lim= min((self.l*1000/350),20)                                      #Deflection Limit
         self.ast_min = (85*self.b*self.d) / (self.fy*100)                   #Reinforcement Bar Minimum Limit
         self.ast_max = (4*self.b*self.d) / 100                                        #Reinforcement Bar Maximum Limit
         self.lateral_stability= min([(60*self.b),(250*self.b*self.b/self.d)])           #Lateral Stability Check
@@ -2102,301 +2102,6 @@ class RCbeam():
             Design_Cost_rebar= DesignCost_rebar1.copy()
 
         return (Design_Cost_rebar)
-
-
-    def __rebar_without_construct_but_practical(self,record_best_fitness,solutions,optimized_area,list_bars, max_bars, ast,common= None):
-
-        b= self.b
-        co= self.cover
-
-        rebars_list= self.rebars_list.copy()
-        final_fitness= []
-        final_index= []
-
-        final_bar1= []
-        final_bar2=[]
-        final_bar3=[]
-
-        final_num_of_bar1= []
-        final_num_of_bar2=[]
-        final_num_of_bar3=[]
-        min_space= []
-        Total_Bars= []
-        min_spacing= self.min_space_between_rebar
-        max_dia_list= [] 
-       
-        ib= [ ibb  for ibb in range (0,len(rebars_list)+1,4)]
-
-        for i, x in enumerate(record_best_fitness):
-            if x < 700 and (list_bars[i] <= max_bars):
-                final_fitness.append(x)
-                final_index.append(i)
-
-
-        final_sol=[solutions[i] for i in final_index]    
-        final_optimized_area = [optimized_area[i] for i in final_index]
-
-        pop_index= []
-
-        for i,x in enumerate(final_sol):
-                
-            if len(x) ==1:  
-                status= 1  
-
-                A1 = x[0]
-                bar1_index = rebars_list.index(A1)
-                op11= int(bar1_index/4)           #helping find op12
-                op12= 1+bar1_index-(int(bar1_index/4)*4)
-
-                for ibb in range (1,len(ib)):
-                    if ib[ibb-1]<= bar1_index <ib[ibb]:
-                        bar1= self.rebar_size[ibb-1]
-
-                max_dia= bar1
-                min_dia= bar1
-
-                spacing= (b - (2*co)) / (op12)
-
-
-                if op12 ==1:
-                    if status ==1:
-                        pop_index.append(i)
-                        status= 0
-
-                final_bar1.append(bar1)
-                final_bar2.append(0)
-                final_bar3.append(0)
-
-                final_num_of_bar1.append(op12)
-                final_num_of_bar2.append(0)
-                final_num_of_bar3.append(0)
-
-                totalbars= op12                     
-
-            # For 2 different bars combo
-            if len(x) ==2:
-                status= 1
-
-                A1 = x[0]
-                A2= x[1]
-                bar1_index = rebars_list.index(A1)
-                bar2_index = rebars_list.index(A2)
-                op11= int(bar1_index/4)           #helping find op12
-                op12= 1+bar1_index-(int(bar1_index/4)*4)
-
-                op21= int(bar2_index/4)           #helping find op12
-                op22= 1+bar2_index-(int(bar2_index/4)*4)
-
-                for ibb in range (1,len(ib)):
-                    if ib[ibb-1]<= bar1_index <ib[ibb]:
-                        bar1= self.rebar_size[ibb-1]
-
-                for ibb in range (1,len(ib)):
-                    if ib[ibb-1]<= bar2_index <ib[ibb]:
-                        bar2= self.rebar_size[ibb-1]
-
-                max_dia= max (bar1, bar2)
-                min_dia= min (bar1, bar2)
-
-
-                if bar1==bar2:
-                    no_bars= op12+op22
-                    s= str(bar1)+"-"+str(no_bars)
-                    final_sol[i]= s.split(" ")
-
-                    final_bar1.append(bar1)
-                    final_bar2.append(0)
-                    final_bar3.append(0)
-
-                    final_num_of_bar1.append(no_bars)
-                    final_num_of_bar2.append(0)
-                    final_num_of_bar3.append(0)
-
-                if bar1!=bar2:
-                    final_bar1.append(bar1)
-                    final_bar2.append(bar2)
-                    final_bar3.append(0)
-
-                    final_num_of_bar1.append(op12)
-                    final_num_of_bar2.append(op22)
-                    final_num_of_bar3.append(0)
-
-                totalbars= op12+op22
-                   
-
-            # For 3 different bars combo
-            if len(x) ==3:
-                status= 1
-
-                A1 = x[0]
-                A2= x[1]
-                A3= x[2]
-                bar1_index = rebars_list.index(A1)
-                bar2_index = rebars_list.index(A2)
-                bar3_index = rebars_list.index(A3)
-                op11= int(bar1_index/4)           #helping find op12
-                op12= 1+bar1_index-(int(bar1_index/4)*4)
-
-                op21= int(bar2_index/4)           #helping find op22
-                op22= 1+bar2_index-(int(bar2_index/4)*4)
-
-                op31= int(bar3_index/4)           #helping find op32
-                op32= 1+bar3_index-(int(bar3_index/4)*4)
-
-                for ibb in range (1,len(ib)):
-                    if ib[ibb-1]<= bar1_index <ib[ibb]:
-                        bar1= self.rebar_size[ibb-1]
-
-                for ibb in range (1,len(ib)):
-                    if ib[ibb-1]<= bar2_index <ib[ibb]:
-                        bar2= self.rebar_size[ibb-1]
-
-                for ibb in range (1,len(ib)):
-                    if ib[ibb-1]<= bar3_index <ib[ibb]:
-                        bar3= self.rebar_size[ibb-1]
-
-                max_dia= max (bar1, bar2, bar3)
-                min_dia= min (bar1, bar2, bar3)
-
-
-                if bar1==bar2 and bar1!=bar3:
-                    no_bars= op12+op22
-                    s= str(bar1)+"-"+str(no_bars)+ " " + str(bar3)+"-"+str(op32)
-                    final_sol[i]= s.split(" ")
-
-                    final_bar1.append(bar1)
-                    final_bar2.append(bar3)
-                    final_bar3.append(0)
-
-                    final_num_of_bar1.append(no_bars)
-                    final_num_of_bar2.append(op32)
-                    final_num_of_bar3.append(0)
-                    op121= op12+op22
-                   
-
-                if bar1==bar3 and bar1!=bar2:
-                    no_bars= op12+op32
-                    s= str(bar1)+"-"+str(no_bars)+ " " + str(bar2)+"-"+str(op22)
-                    final_sol[i]= s.split(" ")
-
-                    final_bar1.append(bar1)
-                    final_bar2.append(bar2)
-                    final_bar3.append(0)
-
-                    final_num_of_bar1.append(no_bars)
-                    final_num_of_bar2.append(op22)
-                    final_num_of_bar3.append(0)                
-
-
-
-                if bar2==bar3 and bar1!=bar2:
-                    no_bars= op22+op32
-                    s= str(bar1)+"-"+str(op12)+ " " +  str(bar2)+"-"+ str(no_bars)
-                    final_sol[i]= s.split(" ")
-
-                    final_bar1.append(bar1)
-                    final_bar2.append(bar2)
-                    final_bar3.append(0)
-
-                    final_num_of_bar1.append(op12)
-                    final_num_of_bar2.append(no_bars)
-                    final_num_of_bar3.append(0)  
-
-
-                if bar2==bar3 and bar1==bar2:
-                    no_bars= op12+op22+op32
-                    s= str(bar1)+"-"+str(no_bars)
-                    final_sol[i]= s.split(" ")
-
-                    final_bar1.append(bar1)
-                    final_bar2.append(0)
-                    final_bar3.append(0)
-
-                    final_num_of_bar1.append(no_bars)
-                    final_num_of_bar2.append(0)
-                    final_num_of_bar3.append(0) 
-
-                if bar1!=bar2 and bar1!=bar3 and bar2!=bar3:
-                    final_bar1.append(bar1)
-                    final_bar2.append(bar2)
-                    final_bar3.append(bar3)
-
-                    final_num_of_bar1.append(op12)
-                    final_num_of_bar2.append(op22)
-                    final_num_of_bar3.append(op32) 
-
-
-                totalbars= op12+op22+op32
-            max_dia_list.append(max_dia)
-            Total_Bars.append(totalbars) 
-
-        for eleminate in sorted(pop_index, reverse = True):
-            del final_index[eleminate]
-            del final_fitness[eleminate]
-            del final_sol[eleminate]
-            del final_optimized_area[eleminate] 
-            del final_bar1[eleminate] 
-            del final_bar2[eleminate] 
-            del final_bar3[eleminate] 
-            del final_num_of_bar1[eleminate] 
-            del final_num_of_bar2[eleminate] 
-            del final_num_of_bar3[eleminate] 
-            del Total_Bars[eleminate] 
-            del max_dia_list[eleminate] 
-
-        required_area= [ast for i in range (len(final_sol))]
-
-        
-        Final_optimized_rebars=  pd.DataFrame({'Bar_Combination': final_sol, 'Total_Area (mm2)': final_optimized_area, 'Total_Bars': Total_Bars, 'Bar1 (mm)': final_bar1, 'Number of bar1':final_num_of_bar1, 'Bar2 (mm)': final_bar2, 'Number of bar2':final_num_of_bar2, 'Bar3 (mm)': final_bar3, 'Number of bar3':final_num_of_bar3, "Max Dia":max_dia_list } ) 
-
-        if Final_optimized_rebars.empty:
-            print ("FAILURE")
-            pass
-
-        Final_optimized_rebars.insert(loc = 2, column = 'Ast Required (mm2)',
-                value = required_area)
-        
-        Final_optimized_rebars.insert(loc = 3, column = 'Difference',
-                value = (Final_optimized_rebars["Total_Area (mm2)"]- Final_optimized_rebars["Ast Required (mm2)"]))
-        
-        delete_duplicate=[]
-        df= Final_optimized_rebars.copy()
-        for i in range (len(df.index)-1):
-            for j in range (i+1, len(df.index)):
-                if (df.iloc[i,5]== df.iloc[j,5]) and (df.iloc[i,6]== df.iloc[j,6]):
-                    if (df.iloc[i,7]== df.iloc[j,7]) and (df.iloc[i,8]== df.iloc[j,8]):
-                        if (df.iloc[i,9]== df.iloc[j,9]) and (df.iloc[i,10]== df.iloc[j,10]):
-                            delete_duplicate.append(j)
-        df.drop(delete_duplicate, inplace = True)
-        df.reset_index(inplace=True, drop= True)
-
-        df= df.round({"Difference":3})
-        
-        if common== None:
-            arr= np.argwhere(df[['Difference']].values == (df[['Difference']].values.min()))
-            DesignCost_rebar1= df.loc[arr[:,0]]
-        else:
-            arrr= np.argwhere(df[['Bar1 (mm)']].values == common)
-            DCR= df.loc[arrr[:,0]]
-
-            arrr1= np.argwhere(DCR[['Number of bar1']].values >=2)
-            DCR= DCR.iloc[arrr1[:,0],:]
-
-            arr= np.argwhere(DCR[['Difference']].values == (DCR[['Difference']].values.min()))
-            DesignCost_rebar1= DCR.iloc[arr[:,0],:]
-
-        if len(DesignCost_rebar1.index)>1:
-            arr1= np.argwhere((DesignCost_rebar1[['Max Dia']].values) == (DesignCost_rebar1[['Max Dia']].values.min()))
-            DesignCost_rebar2= DesignCost_rebar1.iloc[arr1[:,0],:]
-        
-            DesignCost_rebar2.drop(columns=['Max Dia'], inplace = True)
-            Design_Cost_rebar= DesignCost_rebar2.copy()
-
-        else:
-            DesignCost_rebar1.drop(columns=['Max Dia'], inplace = True)
-            Design_Cost_rebar= DesignCost_rebar1.copy()
-
-        return (Design_Cost_rebar)
     
     def __rebarweightcalculation(self):
 
@@ -2500,26 +2205,43 @@ class RCbeam():
         self.rebar_length_detail= pd.concat((bottom_bar_df_bars,top_bar_df ))    
 
 
-    def plotting (self):
+    def plotting (self,index=None):
         """This function of :class:`PyRCD.RCbeam` objects perform the detailing of beam as the  finalized design of reinforced concrete beam. It produces both 3D and 2D detailing of RC beam for visualization.  
 
         :param: None
         """
+        if self.optimization_status==True:
+            if index is None:
+                raise Exception("Index is missing. Index parameter from optimization is needed for detailing")
+            
+            b= self.optimization_result.at[index,"Solution"][0]
+            D= self.optimization_result.at[index,"Solution"][1]+ self.cover
+            rd= self.rd_list[index].copy()
+            sd= self.sd_list[index].copy()
+            
+        else:    
+            b= self.b
+            D= self.d+ self.cover
+            rd= self.rebar_detail.copy()
+            sd= self.shear_detail.copy()
+
+        bottom_bars_pd = rd.iloc[0,:].to_frame().T  
+        top_bars= rd.iloc[1:,5:]
+        top_bars_np= top_bars.iloc[:,0:7].to_numpy()  
+
+        if self.plotting_status == False:
+            raise Exception ("Detailing requires designing. Please perform design or optimization")
 
 
-
-        b= self.b
-        D= self.d+ self.cover
         l= self.l*1000
-        rd= self.rebar_detail.copy()
-        sd= self.shear_detail.copy()
+
         cover= self.cover
         left_support_size= self.left_support_size
         right_support_size= self.right_support_size
         left_end_continous= self.left_end_continous
         right_end_continous= self.right_end_continous
-        side_bar= self.side_bar
-        side_bar_size=  self.side_bar_size
+        # side_bar= self.side_bar
+        # side_bar_size=  self.side_bar_size
         col_cover= 50                   # column cover
         col_bar= 16                     # column bar at edge
         
@@ -2744,6 +2466,95 @@ class RCbeam():
                     marker=dict(size=[rebar[ 0, 7],rebar[ 0, 7]],
                                 color=[colour,colour])))
 
+        #NEW-----------------------Middile Bottom Rebar Detailing
+        x_end = xx_bar_c
+        y_end = zz_bar_l
+        x_start = [(l/2)-(1.4*b), (l/2)+(1.4*b)]
+        y_start = [-1.8*D, -1.8*D]
+        list_of_all_arrows = []
+        for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+                            showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            # list_of_all_arrows.append(arrow)
+        fig1.add_annotation( x=(l/2)-(1.8*b), y=-1.8*D, xref="x", yref="y", text= f'<b> {rebar[ 0, 7]}# Bar</b>'  , showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black"), align="center")
+
+        fig1.add_annotation( x=(l/2)+(1.8*b), y=-1.8*D, xref="x", yref="y", text=f'<b>{rebar[ 0, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+
+        x_end = xx_bar_l
+        y_end = zz_bar_l
+        x_start = [(250), (500+ (2.7*b))]
+        y_start = [-1.8*D, -1.8*D]
+        list_of_all_arrows = []
+        for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+                            showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            # list_of_all_arrows.append(arrow)
+        fig1.add_annotation( x=250, y=-1.78*D, xref="x", yref="y", text=f'<b>{rebar[ 0, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+        fig1.add_annotation( x=(500+(2.7*b)), y=-1.78*D, xref="x", yref="y", text=f'<b>{rebar[ 0, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+
+        x_end = xx_bar_r
+        y_end = zz_bar_l
+        x_start = [l-200, l-500-(2.5*b)]
+        y_start = [-1.8*D, -1.8*D]
+        list_of_all_arrows = []
+        for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+                            showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            # list_of_all_arrows.append(arrow)
+        fig1.add_annotation( x=l-200 , y=-1.78*D, xref="x", yref="y", text=f'<b>{rebar[ 0, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+        fig1.add_annotation( x=l-500-(2.9*b), y=-1.78*D, xref="x", yref="y", text=f'<b>{rebar[ 0, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+        #NEW END-----------------------
+
+
+        #NEW-----------------------Stirrups Annotations
+        x_end = [(l/2)-(b)+2*cover-(rebar[ 0, 7]/2)]
+        y_end = [-1.5*D]                                        #zz_bar_l
+        x_start = [(l/2)-(1.4*b)]
+        y_start = [-1.5*D]
+        list_of_all_arrows = []
+        for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+                            showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            # list_of_all_arrows.append(arrow)
+        fig1.add_annotation( x=(l/2)-(2.2*b), y=-1.5*D, xref="x", yref="y", text=f'<b>{self.shear_detail.iloc[ 0, 1]}# Bar  <br>@ {int(self.shear_detail.iloc[ 2, 3])}mm</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+
+
+        x_end = [500+2*cover -(rebar[ 0, 7]/2)]
+        y_end = [-1.5*D]                        #zz_bar_l
+        x_start = [(350)]
+        y_start = [-1.5*D]
+        list_of_all_arrows = []
+        
+        for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+                            showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            # list_of_all_arrows.append(arrow)
+        fig1.add_annotation( x=200, y=-1.5*D, xref="x", yref="y", text=f'<b>{self.shear_detail.iloc[ 1, 1]}# Bar <br>@ {int(self.shear_detail.iloc[ 0, 3])}mm</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+
+
+
+        x_end = [l-500-2*cover+ (rebar[ 0, 7]/2)]
+        y_end = [-1.5*D]                                    #zz_bar_l
+        x_start = [l-350]
+        y_start = [-1.5*D]
+        list_of_all_arrows = []
+        for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+                            showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            # list_of_all_arrows.append(arrow)
+        fig1.add_annotation( x=l-100 , y=-1.5*D, xref="x", yref="y", text=f'<b>{self.shear_detail.iloc[ 2, 1]}# Bar <br>@ {int(self.shear_detail.iloc[ 1, 3])}mm</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
+
+
+
+        #NEW END-----------------------
+
 
         # Development Length Left support Bottom
         if left_end_continous== False:
@@ -2759,6 +2570,7 @@ class RCbeam():
             fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
             ld_remaining_left= rebar[ 0, 9]-L_ld_left
+            
 
             if ld_remaining_left < (D- (2*cover+rebar[ 1, 7]+rebar[ 0, 7])):
                 L_ld_left= ld_remaining_left   
@@ -2773,11 +2585,15 @@ class RCbeam():
 
                 fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-            x2_2d= [st, cord_ld_left, x11 ]
-            z2_2d= [cover, cover, z11+ld_remaining_left ]
-            
-            fig1.add_trace(go.Scatter(x=x2_2d, y=z2_2d, mode= 'lines',
-                    line_shape='linear', line=dict(color='red', width=2)))
+                x2_2d= [st, cord_ld_left, x11 ]
+                z2_2d= [cover, cover, z11+ld_remaining_left ]
+            else:
+                x11= cord_ld_left- (rebar[ 0, 7]/2)
+                z11= cover- (rebar[ 0, 7]/2) 
+                x2_2d= [st, cord_ld_left, x11 ]
+                z2_2d= [cover, cover, z11+ld_remaining_left ]
+
+            fig1.add_trace(go.Scatter(x=x2_2d, y=z2_2d, mode= 'lines', line_shape='linear', line=dict(color='red', width=2)))
             
         # Development Length Right support Bottom
         if right_end_continous== False:
@@ -2796,6 +2612,7 @@ class RCbeam():
             ld_remaining_right= rebar[ 0, 9]-L_ld_right
 
             x22=  L_ld_right
+            
 
             if ld_remaining_right < (D- (2*cover+rebar[ 1, 7]+rebar[ 0, 7])):
     
@@ -2811,18 +2628,29 @@ class RCbeam():
 
                 fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-            x2_2d= [en, en+x22, x11 ]
-            z2_2d= [cover, cover, z11+ld_remaining_right ]
+                x2_2d= [en, en+x22, x11 ]
+                z2_2d= [cover, cover, z11+ld_remaining_right ]
+            else:
+                x11= cord_ld_right + L_ld_right + (rebar[ 0, 7]/2)
+                z11= cover- (rebar[ 0, 7]/2)
+                x2_2d= [en, en+x22, x11 ]
+                z2_2d= [cover, cover, z11-ld_remaining_right ]
 
             fig1.add_trace(go.Scatter(x=x2_2d, y=z2_2d, mode= 'lines',
-                    line_shape='linear', line=dict(color='red', width=2)))
+                        line_shape='linear', line=dict(color='red', width=2)))
             
             
         corner_bar= rebar[ 0, 7]
         space= (b- (2*cover))/ (rebar[0,0]- 1)
         total_bars_bottom= rebar[0,0]- 2
-        rebar[0,2]= rebar[0,2]-2
+
+        find_bar= rebar[0,7]
+        availability= np.where(rebar[0,:6] == find_bar)
+        loca= availability[0]  
+        rebar[0,loca+1]= rebar[0,loca+1]-2
         
+
+            
         for i in range (1,total_bars_bottom+1):
             
             if left_end_continous==False:
@@ -2855,7 +2683,8 @@ class RCbeam():
                     fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
                     rebar[0,2]= rebar[0,2]-1
-
+                    
+                    actual_rebar= rebar[0,1]
 
                     xx_bar_c= [(l/2)-(b)+2*cover+(i*space*2)]
                     zz_bar_c= [-2*D+cover]
@@ -2878,6 +2707,8 @@ class RCbeam():
 
                     rebar[0,4]= rebar[0,4]-1
 
+                    actual_rebar= rebar[0,3]
+
                     xx_bar_c= [(l/2)-(b)+2*cover+(i*space*2)]
                     zz_bar_c= [-2*D+cover]
                     fig1.add_trace(go.Scatter(x=xx_bar_c, y=zz_bar_c, mode= 'markers',
@@ -2899,13 +2730,28 @@ class RCbeam():
                     fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8)) 
 
                     rebar[0,6]= rebar[0,6]-1
+                    actual_rebar= rebar[0,5]
 
                     xx_bar_c= [(l/2)-(b)+2*cover+(i*space*2)]
                     zz_bar_c= [-2*D+cover]
                     fig1.add_trace(go.Scatter(x=xx_bar_c, y=zz_bar_c, mode= 'markers',
                     marker=dict(size=[rebar[ 0, 5],rebar[ 0, 5]],
                                 color=[colour,colour])))
-                    
+
+
+            # x_end = xx_bar_c
+            # y_end = zz_bar_c
+            # x_start = [(l/2)-(1.4*b), (l/2)+(1.4*b)]
+            # y_start = [-1.8*D, -1.8*D]
+            # list_of_all_arrows = []
+            # for x0x,y0y,x1x,y1y in zip(x_end, y_end, x_start, y_start):
+            #     fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
+            #                     showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
+            #     # list_of_all_arrows.append(arrow)
+            # fig1.add_annotation( x=(l/2)-(1.4*b), y=-1.8*D, xref="x", yref="y", text=f"{actual_rebar}# Bar", showarrow=False, font=dict( family="Courier New, monospace", size=16, color="black" ), align="center")
+
+            # fig1.add_annotation( x=(l/2)+(1.4*b), y=-1.8*D, xref="x", yref="y", text=f"{rebar[ 0, 7]}# Bar", showarrow=False, font=dict( family="Courier New, monospace", size=16, color="black" ), align="center")
+       
     #------------------END ------------------------
 
 
@@ -2981,7 +2827,7 @@ class RCbeam():
             fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
                             showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
             # list_of_all_arrows.append(arrow)
-        fig1.add_annotation( x=(l/2), y=-0.75*D, xref="x", yref="y", text="12# Bar", showarrow=False, font=dict( family="Courier New, monospace", size=16, color="black" ), align="center")
+        fig1.add_annotation( x=(l/2), y=-0.75*D, xref="x", yref="y", text=f'<b> {rebar[ 1, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="center")
 
         x_end = xx_bar_l
         y_end = zz_bar_l
@@ -2991,7 +2837,7 @@ class RCbeam():
             fig1.add_annotation(dict(x=x0x, y=y0y, xref="x", yref="y", text="",
                             showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
             # list_of_all_arrows.append(arrow)
-        fig1.add_annotation( x=(200), y=-1.25*D, xref="x", yref="y", text="12# Bar", showarrow=False, font=dict( family="Courier New, monospace", size=16, color="black" ), align="left")
+        fig1.add_annotation( x=(200), y=-1.25*D, xref="x", yref="y", text=f'<b>{rebar[ 1, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="left")
 
         x_end = xx_bar_r
         y_end = zz_bar_l
@@ -3002,7 +2848,7 @@ class RCbeam():
                             showarrow=True, axref="x", ayref='y', ax=x1x, ay=y1y, arrowhead=3, arrowwidth=1.5, arrowcolor='green',) )
             # list_of_all_arrows.append(arrow)
         # fig1.update_layout(annotations=list_of_all_arrows)
-        fig1.add_annotation( x=(l-200), y=-1.25*D, xref="x", yref="y", text="12# Bar", showarrow=False, font=dict( family="Courier New, monospace", size=16, color="black" ), align="right")
+        fig1.add_annotation( x=(l-200), y=-1.25*D, xref="x", yref="y", text=f'<b> {rebar[ 1, 7]}# Bar</b>', showarrow=False, font=dict( family="Courier New, monospace", size=22, color="black" ), align="right")
 
 
 
@@ -3081,11 +2927,20 @@ class RCbeam():
 
         space_l= (b- (2*cover))/ (rebar[1,0]- 1)
         space_r= (b- (2*cover))/ (rebar[2,0]- 1)
-
+ 
         total_bars_top_left= rebar[1,0]- 2
         total_bars_top_right= rebar[2,0]- 2
-        rebar[1,2]= rebar[1,2]-2
-        rebar[2,2]= rebar[2,2]-2
+
+        find_bar= rebar[1,7]
+        availability1= np.where(rebar[1,:6] == find_bar)
+        availability2= np.where(rebar[2,:6] == find_bar)
+        loca1= availability1[0] 
+        loca2= availability2[0] 
+        rebar[1,loca1+1]= rebar[1,loca1+1]-2
+        rebar[2,loca2+1]= rebar[2,loca2+1]-2
+
+        # rebar[1,2]= rebar[1,2]-2
+        # rebar[2,2]= rebar[2,2]-2
 
         corner_bar= rebar[ 1, 7]
 
@@ -3108,74 +2963,118 @@ class RCbeam():
 
             l2= end-st
 
-            if rebar[1,2] !=0:
-                if rebar[1,1] !=0:
+            if rebar[1,2] >= rebar[1,4] and  rebar[1,2] >= rebar[1,6]:
+                col_no= 2
+            if rebar[1,4] > rebar[1,2] and  rebar[1,4] >= rebar[1,6]:
+                col_no= 4                  
+            if rebar[1,6] > rebar[1,2] and  rebar[1,6] >= rebar[1,4]:
+                col_no= 6 
 
-                    colour = self.__rebar_colour(rebar[ 1, 1])
+            if rebar[1,col_no] !=0:
+                if rebar[1,col_no-1] !=0:
+
+                    colour = self.__rebar_colour(rebar[ 1, col_no-1])
                     colorscale = [[0, colour],
                             [1, colour]]
                     
-                    shift= rebar[ 1, 1] - corner_bar
+                    shift= rebar[ 1, col_no-1] - corner_bar
 
-                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, 1]/2), l2)
+                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, col_no-1]/2), l2)
 
                     fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-                    rebar[1,2]= rebar[1,2]-1
+                    rebar[1,col_no]= rebar[1,col_no]-1
 
                     xx_bar_l= [500+2*cover+(i*space_l*2)]
-                    zz_bar_l= [-D-cover]
+                    if rebar[ 1, col_no-1]==12:
+                        zz_bar_l= [-D-cover]
+                    else:
+                        zz_bar_l= [-D-cover-(rebar[ 1, col_no-1]/2)]
                     
                     fig1.add_trace(go.Scatter(x=xx_bar_l, y=zz_bar_l, mode= 'markers',
-                                    marker=dict(size=[rebar[ 1, 1],rebar[ 1, 1]],
-                                            color=colour)))
+                                    marker=dict(size=[rebar[ 1, col_no-1]],        
+                                            color=colour)))     #,rebar[ 1, 1]
+                    continue
                 
 
+            # if rebar[1,2] !=0:
+            #     if rebar[1,1] !=0:
 
-            if rebar[1,4] !=0:
-                if rebar[1,3] !=0:
-
-                    colour = self.__rebar_colour(rebar[ 1, 3])
-                    colorscale = [[0, colour],
-                            [1, colour]]
+            #         colour = self.__rebar_colour(rebar[ 1, 1])
+            #         colorscale = [[0, colour],
+            #                 [1, colour]]
                     
-                    shift= rebar[ 1, 3] - corner_bar
+            #         shift= rebar[ 1, 1] - corner_bar
 
-                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, 3]/2), l2)
+            #         x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, 1]/2), l2)
 
-                    fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
+            #         fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-                    rebar[1,4]= rebar[1,4]-1
+            #         rebar[1,2]= rebar[1,2]-1
 
-                    xx_bar_l= [500+2*cover+(i*space_l*2)]
-                    zz_bar_l= [-D-cover]
+            #         xx_bar_l= [500+2*cover+(i*space_l*2)]
+            #         if rebar[ 1, 1]==12:
+            #             zz_bar_l= [-D-cover]
+            #         else:
+            #             zz_bar_l= [-D-cover-(rebar[ 1, 1]/2)]
                     
-                    fig1.add_trace(go.Scatter(x=xx_bar_l, y=zz_bar_l, mode= 'markers',
-                                    marker=dict(size=[rebar[ 1, 4],rebar[ 1, 4]],
-                                            color=colour)))
+            #         fig1.add_trace(go.Scatter(x=xx_bar_l, y=zz_bar_l, mode= 'markers',
+            #                         marker=dict(size=[rebar[ 1, 1]],        
+            #                                 color=colour)))     #,rebar[ 1, 1]
+            #         continue
+                
+            # if rebar[1,4] !=0:
+            #     if rebar[1,3] !=0:
 
-
-            if rebar[1,6] !=0:
-                if rebar[1,5] !=0:
-
-                    colour = self.__rebar_colour(rebar[ 1, 5])
-                    colorscale = [[0, colour],
-                            [1, colour]]
+            #         colour = self.__rebar_colour(rebar[ 1, 3])
+            #         colorscale = [[0, colour],
+            #                 [1, colour]]
                     
-                    shift= rebar[ 1, 5] - corner_bar
+            #         shift= rebar[ 1, 3] - corner_bar
 
-                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, 5]/2), l2)
+            #         x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, 3]/2), l2)
 
-                    fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
+            #         fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-                    rebar[1,6]= rebar[1,6]-1
+            #         rebar[1,4]= rebar[1,4]-1
 
-                    xx_bar_l= [500+2*cover+(i*space_l*2)]
-                    zz_bar_l= [-D-cover]
+            #         xx_bar_l= [500+2*cover+(i*space_l*2)]
+            #         if rebar[ 1, 3]==12:
+            #             zz_bar_l= [-D-cover]
+            #         else:
+            #             zz_bar_l= [-D-cover-(rebar[ 1, 3]/2)]
                     
-                    fig1.add_trace(go.Scatter(x=xx_bar_l, y=zz_bar_l, mode= 'markers',
-                                    marker=dict(size=[rebar[ 1, 6],rebar[ 1, 6]],
-                                            color=colour)))
+            #         fig1.add_trace(go.Scatter(x=xx_bar_l, y=zz_bar_l, mode= 'markers',
+            #                         marker=dict(size=[rebar[ 1, 3]],
+            #                                 color=colour)))
+            #         continue
+
+
+            # if rebar[1,6] !=0:
+            #     if rebar[1,5] !=0:
+
+            #         colour = self.__rebar_colour(rebar[ 1, 5])
+            #         colorscale = [[0, colour],
+            #                 [1, colour]]
+                    
+            #         shift= rebar[ 1, 5] - corner_bar
+
+            #         x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 1, 5]/2), l2)
+
+            #         fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
+
+            #         rebar[1,6]= rebar[1,6]-1
+
+            #         xx_bar_l= [500+2*cover+(i*space_l*2)]
+            #         if rebar[ 1, 5]==12:
+            #             zz_bar_l= [-D-cover]
+            #         else:
+            #             zz_bar_l= [-D-cover-(rebar[ 1, 5]/2)]
+                    
+            #         fig1.add_trace(go.Scatter(x=xx_bar_l, y=zz_bar_l, mode= 'markers',
+            #                         marker=dict(size=[rebar[ 1, 5],],
+            #                                 color=colour)))          #rebar[ 1, 6]
+            #         continue
 
 
         # top right bars
@@ -3192,78 +3091,129 @@ class RCbeam():
                 start= 0.75*l
                 end= start + rs + (2*0.25*l)
                 x2= [ start, end]
-                y2= [(cover+(i*space_l)), (cover+(i*space_l))]
+                y2= [(cover+(i*space_r)), (cover+(i*space_r))]
                 z2= [D- cover, D- cover]        
             
             l2= end-start
 
-            if rebar[2,2] !=0:
-                if rebar[2,1] !=0:
 
-                    colour = self.__rebar_colour(rebar[ 2, 1])
+            if rebar[2,2] >= rebar[2,4] and  rebar[2,2] >= rebar[2,6]:
+                col_no= 2
+            if rebar[2,4] > rebar[2,2] and  rebar[2,4] >= rebar[2,6]:
+                col_no= 4                  
+            if rebar[2,6] > rebar[2,2] and  rebar[2,6] >= rebar[2,4]:
+                col_no= 6 
+
+            if rebar[2,col_no] !=0:
+                if rebar[2,col_no-1] !=0:
+
+                    colour = self.__rebar_colour(rebar[ 2, col_no-1])
                     colorscale = [[0, colour],
                             [1, colour]]
                     
-                    shift= rebar[ 2, 1] - corner_bar
+                    shift= rebar[ 2, col_no-1] - corner_bar
 
-                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, 1]/2), l2)
+                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, col_no-1]/2), l2)
 
                     fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-                    rebar[2,2]= rebar[2,2]-1
+                    rebar[2,col_no]= rebar[2,col_no]-1
 
-
-                    zz_bar_l= [-D-cover]  
                     xx_bar_r= [l-500-2*cover- ((i*space_r*2))]
 
-                    fig1.add_trace(go.Scatter(x=xx_bar_r, y=zz_bar_l, mode= 'markers',
-                                marker=dict(size=[rebar[ 2, 1],rebar[ 2, 1]],
-                                            color=[colour,colour])))
-
-
-            if rebar[2,4] !=0:
-                if rebar[2,3] !=0:
-
-                    colour = self.__rebar_colour(rebar[ 2, 3])
-                    colorscale = [[0, colour],
-                            [1, colour]]
+                    if rebar[ 2, col_no-1]==12:
+                        zz_bar_l= [-D-cover]
+                    else:
+                        zz_bar_l= [-D-cover-(rebar[ 2, col_no-1]/2)]
                     
-                    shift= rebar[ 2, 3] - corner_bar
-
-                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, 3]/2), l2)
-
-                    fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
-
-                    rebar[2,4]= rebar[2,4]-1
-
-                    zz_bar_l= [-D-cover]  
-                    xx_bar_r= [l-500-2*cover- ((i*space_r*2))]
-
                     fig1.add_trace(go.Scatter(x=xx_bar_r, y=zz_bar_l, mode= 'markers',
-                                marker=dict(size=[rebar[ 2, 3],rebar[ 2, 3]],
-                                            color=[colour,colour])))
+                                    marker=dict(size=[rebar[ 2, col_no-1]],        
+                                            color=colour)))     #,rebar[ 1, 1]
+                    continue
 
-            if rebar[2,6] !=0:
-                if rebar[2,5] !=0:
 
-                    colour = self.__rebar_colour(rebar[ 2, 5])
-                    colorscale = [[0, colour],
-                            [1, colour]]
+            # if rebar[2,2] !=0:
+            #     if rebar[2,1] !=0:
+
+            #         colour = self.__rebar_colour(rebar[ 2, 1])
+            #         colorscale = [[0, colour],
+            #                 [1, colour]]
                     
-                    shift= rebar[ 2, 5] - corner_bar
+            #         shift= rebar[ 2, 1] - corner_bar
 
-                    x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, 5]/2), l2)
+            #         x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, 1]/2), l2)
 
-                    fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
+            #         fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
 
-                    rebar[2,6]= rebar[2,6]-1
+            #         rebar[2,2]= rebar[2,2]-1
 
-                    zz_bar_l= [-D-cover]  
-                    xx_bar_r= [l-500-2*cover- ((i*space_r*2))]
 
-                    fig1.add_trace(go.Scatter(x=xx_bar_r, y=zz_bar_l, mode= 'markers',
-                                marker=dict(size=[rebar[ 2, 5],rebar[ 2, 5]],
-                                            color=[colour,colour])))                    
+            #         if rebar[ 2, 1]==12:
+            #             zz_bar_l= [-D-cover]
+            #         else:
+            #             zz_bar_l= [-D-cover-(rebar[ 2, 1]/2)]  
+
+            #         xx_bar_r= [l-500-2*cover- ((i*space_r*2))]
+
+            #         fig1.add_trace(go.Scatter(x=xx_bar_r, y=zz_bar_l, mode= 'markers',
+            #                     marker=dict(size=[rebar[ 2, 1]],
+            #                                 color=[colour,colour])))
+            #         continue
+
+
+            # if rebar[2,4] !=0:
+            #     if rebar[2,3] !=0:
+
+            #         colour = self.__rebar_colour(rebar[ 2, 3])
+            #         colorscale = [[0, colour],
+            #                 [1, colour]]
+                    
+            #         shift= rebar[ 2, 3] - corner_bar
+
+            #         x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, 3]/2), l2)
+
+            #         fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
+
+            #         rebar[2,4]= rebar[2,4]-1
+
+            #         if rebar[ 2, 3]==12:
+            #             zz_bar_l= [-D-cover]
+            #         else:
+            #             zz_bar_l= [-D-cover-(rebar[ 2, 3]/2)]
+
+            #         xx_bar_r= [l-500-2*cover- ((i*space_r*2))]
+
+            #         fig1.add_trace(go.Scatter(x=xx_bar_r, y=zz_bar_l, mode= 'markers',
+            #                     marker=dict(size=[rebar[ 2, 3]],
+            #                                 color=[colour,colour])))
+            #         continue
+
+            # if rebar[2,6] !=0:
+            #     if rebar[2,5] !=0:
+
+            #         colour = self.__rebar_colour(rebar[ 2, 5])
+            #         colorscale = [[0, colour],
+            #                 [1, colour]]
+                    
+            #         shift= rebar[ 2, 5] - corner_bar
+
+            #         x_cyl, y_cyl, z_cyl = self.__cylinder(x2[0], y2[0], z2[0] - shift , (rebar[ 2, 5]/2), l2)
+
+            #         fig.add_trace( go.Surface(x=x_cyl, y=y_cyl, z=z_cyl, colorscale=colorscale, showscale=False, opacity=0.8))
+
+            #         rebar[2,6]= rebar[2,6]-1
+
+            #         if rebar[ 2, 5]==12:
+            #             zz_bar_l= [-D-cover]
+            #         else:
+            #             zz_bar_l= [-D-cover-(rebar[ 2, 5]/2)]
+
+            #         xx_bar_r= [l-500-2*cover- ((i*space_r*2))]
+
+            #         fig1.add_trace(go.Scatter(x=xx_bar_r, y=zz_bar_l, mode= 'markers',
+            #                     marker=dict(size=[rebar[ 2, 5]],
+            #                                 color=[colour,colour])))    
+            #         continue                
     #------------------END ------------------------
 
     #------------------Stirrups ------------------------
@@ -3638,15 +3588,11 @@ class RCbeam():
 
 
         fig.update_layout(scene_camera=camera)
-        fig.update_layout(height=1000, width=1600)
-        fig1.update_layout(height=1200, width=1800)
+        fig.update_layout(height= 1000, width=1800)
+        fig1.update_layout(height= 1000, width=1800)
 
         self.detailing3D= fig
         self.detailing2D= fig1
-
-        fig.write_html("./detailing.html")
-        fig1.write_html("./detailing_2d.html")        
-
 
 
     def __rebar_colour(self,dia):
@@ -3681,54 +3627,48 @@ class RCbeam():
         y_grid = r * np.sin(theta_grid) + y
         z_grid = z_grid + z
         return x_grid, y_grid, z_grid
-    
-# For design
-# r1= RCbeam(350,500,4,204, 321)
-# bs, rd, sd = r1.dsgbeam()
 
-# Check
-# r1= RCbeam(300,400,4,157, 130, ast_provided= 850)
-# r1.dsgbeam()
+    def __objCalculation(self):
+        b=self.b
+        d= self.d
+        co= self.cover
+        l =self.l
 
-#checking PLotting
-# plotting(300, 500, 4000, rd=rd, sd=sd)
+        self.__rebarweightcalculation()
+        rld= self.rebar_length_detail
+
+        shearbar_vol= 0
+        for kk in range (len(self.beam_shear_detail)):
+                dia= self.beam_shear_detail.iat[kk,1]
+                no_bar= self.beam_shear_detail.iat[kk,4]
+                cutting_len= self.beam_shear_detail.iat[kk,4]
+
+                shearbar_vol= shearbar_vol + ((np.round((np.pi*dia*dia/4), 4)*no_bar*cutting_len)/1000000000)            #m3
+
+        rebar_vol=  (sum((np.pi*rld.loc[:,"Bar"]*rld.loc[:,"Bar"]/4)*(rld.loc[:,"Length"]+rld.loc[:,"Ld"])))/ 1000000000                  #m3
+
+        total_conc_vol=(b*(d+co)*l/1000000)
+        net_conc_vol= (total_conc_vol- ((rebar_vol + shearbar_vol)))
+
+        rebar_weight= (self.den_s* rebar_vol*100)
+        shearbar_weight= (self.den_s* shearbar_vol*100)
+
+        total_weight=  rebar_weight+ shearbar_weight + (self.den_c*100* net_conc_vol)                   #in Kg
 
 
-# for i in range (5):
-#     r1= RCbeam(308,616,5.7,292.5, 195)
-#     bs, rd, sd = r1.dsgbeam()
+        total_cost_steel= self.Cost_steel* ((self.den_s* rebar_vol*100)+ (self.den_s* shearbar_vol*100))   #INR
+        total_cost_concrete= self.Cost_concrete*net_conc_vol    #INR
+        total_cost_formwork= self.Cost_formwork* ( (b*l/1000) + (2*((d+co)*l/1000)))
+
+        total_CO2_steel= self.CO2_steel* ((self.den_s* rebar_vol*100)+ (self.den_s* shearbar_vol*100))   
+        total_CO2_concrete= self.CO2_concrete*(self.den_c*100* net_conc_vol)    
+        total_CO2_formwork= self.CO2_formwork * ( (b*l/1000) + (2*((d+co)*l/1000)))*(self.plywood_thickness/1000)*self.plywood_density
 
 
-r1= RCbeam(500,250,5,156.25, 125)
-s, bf1,bf2,bf3, temp = r1.beam_optimization()
 
+        total_cost= total_cost_steel+ total_cost_concrete + total_cost_formwork
+        total_CO2= total_CO2_steel+ total_CO2_concrete + total_CO2_formwork
 
-V1= r1.total_vol_list
-cv= r1.vol_concrete
-rv= r1.vol_rebar_steel
-sv= r1.vol_stirrups
-rw= r1.wt_rebar_steel
-sw= r1.wt_stirrups
-df= pd.DataFrame({"Temp": temp, "Weight": bf1, "Volume": V1, "Cost": bf2, "CO2": bf3, "Solution": s, "Conc Vol": cv, "Rebar Vol": rv, "Stirrup Vol": sv, "Rebar Weight": rw, "Stirrup Weight": sw}  )
-rd= r1.rd_list
-sd= r1.sd_list
+        total_volume= shearbar_vol + rebar_vol + net_conc_vol
 
-# rd_vol= rd[118]
-# sd_vol= sd[118]
-# rd_cost= rd[106]
-# sd_cost= sd[106]
-
-# rd_co2= rd[152]
-# sd_co2= sd[152]
-
-# with pd.ExcelWriter('PAPER3_output_VERIFICATION2.xlsx') as writer:  
-#      df.to_excel(writer, sheet_name='Total Detail')
-#      rd_vol.to_excel(writer, sheet_name='Rebar Detail Vol')
-#      rd_vol.to_excel(writer, sheet_name='Rebar Detail Weight')
-#      rd_cost.to_excel(writer, sheet_name='Rebar Detail Cost')
-#      rd_co2.to_excel(writer, sheet_name='Rebar Detail CO2')  
-
-#      sd_vol.to_excel(writer, sheet_name='Shear Detail Vol')
-#      sd_vol.to_excel(writer, sheet_name='Shear Detail Weight')
-#      sd_cost.to_excel(writer, sheet_name='Shear Detail Cost')
-#      sd_co2.to_excel(writer, sheet_name='Shear Detail CO2') 
+        self.optimization_result= pd.DataFrame({"Weight": total_weight, "Volume": total_volume, "Cost": total_cost, "CO2": total_CO2, "Solution": f"{b},{d}", "Conc Vol": net_conc_vol, "Rebar Vol": rebar_vol, "Stirrup Vol": shearbar_vol, "Rebar Weight": rebar_weight, "Stirrup Weight": shearbar_weight}, index= [1]  )
