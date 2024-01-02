@@ -1,4 +1,4 @@
-# Example 3: Analysis of 8-story regular building with UDL of -50kN/m on all beams using :class:`StrucPy.RCFA.RCF`. Self-weight not considered.
+# Example 3: Design optimization of RC beam using :class:`PyRCD.RCbeam`.
 
 from PyRCD.RCbeam import rcb
 import pandas as pd

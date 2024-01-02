@@ -40,22 +40,22 @@ Design check status can be accessed through **`beam_status`** variable. It gives
 
 3D Beam Detailing
 ----------------
-3D RC beam detailing can be accessed through **`detailing_3D`** variable, only after performing detailing using `plotting` method.
+3D RC beam detailing can be accessed through **`detailing3D`** variable, only after performing detailing using `plotting` method.
 
 **Type**: Plotly.Figure
 
-.. figure::  ./images/NodeDetails.png
+.. figure::  ./images/3D.png
    :align: center
 
 ----------------
 
 2D Beam Detailing
 ----------------
-2D RC beam detailing can be accessed through **`detailing_2D`** variable, only after performing detailing using `plotting` method.
+2D RC beam detailing can be accessed through **`detailing2D`** variable, only after performing detailing using `plotting` method.
 
 **Type**: Plotly.Figure
 
-.. figure::  ./images/NodeDetails.png
+.. figure::  ./images/2D.png
    :align: center
 
 ----------------
@@ -79,18 +79,12 @@ Reinforcement detail for all pareto front can be accessed through **`rd_list`** 
 
 **Type**: List
 
-.. figure::  ./images/NodeDetails.png
-   :align: center
-
 ----------------
 
-Stirrups Detail of of Optimization Results
+Stirrups Detail of Optimization Results
 ----------------
 Stirrups detail for all pareto front can be accessed through **`sd_list`** variable, only after performing design optimization using `beam_optimization` method. It gives the complete list of stirrup bars detail corresponding to each pareto front front optimization result.
 
 **Type**: List
-
-.. figure::  ./images/NodeDetails.png
-   :align: center
 
 ----------------

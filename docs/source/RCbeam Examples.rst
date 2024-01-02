@@ -43,7 +43,7 @@ Example 2: Design of RC beam using :class:`PyRCD.RCbeam`.
 
 
 
-Example 3: Design optimization of RC beam using :class:`StrucPy.RCFA.RCF`.
+Example 3: Design optimization of RC beam using :class:`PyRCD.RCbeam`.
 -------------------------------------------------------------------------------------------------------------------
 
 .. code-block:: python
