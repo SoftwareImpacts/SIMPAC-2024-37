@@ -5,7 +5,7 @@
 
 import os
 import sys
-sys.path.insert(0, os.path.abspath('../../PyRCD'))       # ../../ two directories up PyRCD.py
+sys.path.insert(0, os.path.abspath('../../'))       # ../../ two directories up PyRCD.py
 
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information

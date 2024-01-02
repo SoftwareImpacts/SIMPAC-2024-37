@@ -1,12 +1,12 @@
 # Example 3: Analysis of 8-story regular building with UDL of -50kN/m on all beams using :class:`StrucPy.RCFA.RCF`. Self-weight not considered.
 
-from PyRCD import RCbeam
+from PyRCD import rcb
 import pandas as pd
 import plotly
 
 #First adjust the values of contraints and constructability function as per requirement
 
-r2= RCbeam(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])     #Creating beam object
+r2= rcb(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])     #Creating beam object
 r2.beam_optimization(nearest_value=25)              #Performing multiobjective optimization
 
 df= r2.optimization_result                          #Storing Pareto front results

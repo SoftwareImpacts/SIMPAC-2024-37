@@ -8,7 +8,7 @@ import plotly
 
 #First adjust the values of contraints function as per requirement
 
-# r2= RCbeam(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])
+# r2= rcb(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])
 # r2.dsgbeam()
 
 

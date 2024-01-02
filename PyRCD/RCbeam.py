@@ -12,7 +12,7 @@ import itertools as itr
 import random
 import time
 
-class RCbeam():
+class rcb():
     """
     This is a class to represent a reinforced concrete beam. It creates an object for the reinforced concrete beam on which design can be performed as per IS456:2000. 
 
