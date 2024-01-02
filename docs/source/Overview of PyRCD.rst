@@ -33,7 +33,7 @@ Required Dependencies
 
 Modules 
 ------------------------------------------------------
-* **RCbeam** - Structural analysis module for Reinforced Concrete Framed Structures 
+* **RCbeam** - Structural design and multi-objective optimization of reinforced concrete beams 
 * **RCcolumn** (Under Development)
 
 
