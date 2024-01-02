@@ -1,9 +1,6 @@
 PyRCD package
 ===============
 
-Submodules
-----------
-
 PyRCD.RCbeam module
 -------------------
 
