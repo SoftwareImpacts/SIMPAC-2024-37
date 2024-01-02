@@ -7,14 +7,14 @@ Example 1: Design check on already designed RC beam using :class:`PyRCD.RCbeam`.
 
 .. code-block:: python
 
-    from PyRCD import RCbeam
+    from PyRCD.RCbeam import rcb
     import pandas as pd
     import plotly
 
     #First adjust the values of constraints, rebar_config and constructability functions as per requirement
 
     # Example 1
-    r1= RCbeam(width=300, depth=450, length=4, bending_moment=157, shear_force=130, ast_provided= 950)
+    r1= rcb(width=300, depth=450, length=4, bending_moment=157, shear_force=130, ast_provided= 950)
     r1.check_beam()
 
     r1.beam_status
@@ -23,14 +23,14 @@ Example 2: Design of RC beam using :class:`PyRCD.RCbeam`.
 ------------------------------------------------------------------------------------------------------------------
 .. code-block:: python
 
-    from PyRCD import RCbeam
+    from PyRCD.RCbeam import rcb
     import pandas as pd
     import plotly
 
     #First adjust the values of constraints, rebar_config and constructability functions as per requirement
 
     # Creating r2 object to represent RC beam
-    r2= RCbeam(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])
+    r2= rcb(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])
 
     r2.dsgbeam()                    # performing the design of RC beam
 
@@ -48,13 +48,13 @@ Example 3: Design optimization of RC beam using :class:`PyRCD.RCbeam`.
 
 .. code-block:: python
 
-    from PyRCD import RCbeam
+    from PyRCD.RCbeam import rcb
     import pandas as pd
     import plotly
 
     #First adjust the values of constraints, rebar_config and constructability functions as per requirement
 
-    r3= RCbeam(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])     #Creating beam object
+    r3= rcb(width=300, depth=450, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])     #Creating beam object
     r3.beam_optimization(nearest_value=25)              #Performing multiobjective optimization
 
     df= r3.optimization_result                          #Storing Pareto front results
