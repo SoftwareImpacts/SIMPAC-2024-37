@@ -1,6 +1,6 @@
 # Example 3: Analysis of 8-story regular building with UDL of -50kN/m on all beams using :class:`StrucPy.RCFA.RCF`. Self-weight not considered.
 
-from PyRCD import rcb
+from PyRCD.RCbeam import rcb
 import pandas as pd
 import plotly
 
@@ -17,8 +17,8 @@ rd= r2.rd_list[min_weight_index]                    #Rebar detail for minimum we
 sd= r2.sd_list[min_weight_index]                    #Shear detail for minimum weight
 # r2.plotting(index= min_weight_index)                #Performing detailing
 
-# fig= r2.detailing3D                                 #Storing 3D detailing
-# fig1= r2.detailing2D                                #Storing 2D detailing
+d_3d= r2.detailing3D                                 #Storing 3D detailing
+d_2d= r2.detailing2D                                #Storing 2D detailing
 
-# fig.write_html("./3D_detailing.html")
-# fig1.write_html("./2D_detailing.html")
+d_3d.write_html("./3D_detailing.html")              #saving detailing file
+d_2d.write_html("./2D_detailing.html")              #saving detailing file

@@ -1,7 +1,7 @@
 Overview of PyRCD
 ====================
 
-**PyRCD** is a powerful python library for design and multiobjective design optimization of reinforced concrete(RC) elements. PyRCD is originally developed for the students and researchers working in field of civil engineering. It will be highly helpful for research in design optimization, designing, and visualizing the detailing of RC beam. It is also highly beneficial for learning the RC design graduate students to 
+**PyRCD** is a powerful python library for design and multi-objective design optimization of reinforced concrete(RC) elements. PyRCD is originally developed for the students and researchers working in field of civil engineering. It will be highly helpful for research in design optimization, designing, and visualizing the detailing of RC beam. It is also highly beneficial for the learning process of graduate students. 
 
 The uniqueness of *PyRCD* is that, it's a first generalized package for design and optimization of RC elements. Its simple functions can be adjusted as per any guidelines. It's flexible and versatile functions allows user to complete design and optimization in just few lines of codes. Its output is coupled with market practices which makes it ready to be deployed in actual construction. 
 
@@ -41,26 +41,25 @@ Modules
 
 RCbeam
 ----------------
-**RCbeam** provides solution to design and multiobjective optimization of reinforced concrete beams.
+**RCbeam** provides solution to design and multi-objective optimization of reinforced concrete beams.
 
 **Current Capabilities of RCbeam**
 
 * Performs design checks on a designed RC beam.
 * Performs designing of RC beam. 
-* Perform multiobjective design optimization on RC beam.
+* Perform multi-objective design optimization on RC beam.
 * Provides pareto front in the form of dataframe. 
 * Generates complete 2D and 3D detailing of RC beam. 
-* Capable of handling both continous and non-continous beams.
+* Capable of handling both continuous and non-continuous beams.
 
 **Speciality of RCbeam**
 
 * Performs design and optimization considering detailed constructability function which includes market practice.
-* Considers three objective functive for optimization: Weight, Cost, and Environmental Impact (kgCO2emission) 
+* Considers three objective function for optimization: Weight, Cost, and Environmental Impact (kgCO2emission) 
 * Generalized package, and functions (objective function, constraints, constructability etc.) can be modified as per any design guidelines. 
 * Ready to use design output.
 * Considers development length and stirrups details in optimization.
 * Suggest improvement during design checks.
-* Capable of handling both continous and non-continous beams.
 
 ----------------------------------------------------------
 
@@ -68,7 +67,5 @@ License
 --------
 
 [MIT] 
-((https://www.gnu.org/licenses/old-licenses/lgpl-2.1.en.html))
-
 ----------------------------------------------------------
 

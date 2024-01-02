@@ -2,7 +2,7 @@
 #Example 2: Analysis of simple supported beam with uniformly distributed loads (UDL) using :class:`StrucPy.RCFA.RCF`.
 
 
-from PyRCD import RCbeam
+from PyRCD.RCbeam import rcb
 import pandas as pd
 import plotly
 
@@ -12,7 +12,6 @@ import plotly
 # r2.dsgbeam()
 
 
-
 #Example 3
-r2= RCbeam(width=200, depth=550, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])
+r2= rcb(width=200, depth=550, length=4, bending_moment=[187, 157, 105], shear_force=[125, 40, 98])
 r2.dsgbeam()
