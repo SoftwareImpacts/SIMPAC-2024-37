@@ -14,52 +14,50 @@ import time
 
 class rcb():
     """
-    This is a class to represent a reinforced concrete beam. It creates an object for the reinforced concrete beam on which design can be performed as per IS456:2000. 
+    This is a class to represent a reinforced concrete beam. It creates an object for the reinforced concrete beam on which design is to be performed as per the guidelines stated by user. 
 
-    :param width: A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the width of the reinforced concrete beam in millimeters (mm). Check :ref:`InputExample:Nodes Details` for more details.
+    :param width: A handle to the :class:`PyRCD.RCbeam.rcb` that detects the width of the reinforced concrete beam in millimeters (mm). 
     :type width: int/float
     
-    :param depth: A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the effective depth of the reinforced concrete beam in millimeters (mm). Check :ref:`InputExample:Nodes Details` for more details.
+    :param depth: A handle to the :class:`PyRCD.RCbeam.rcb` that detects the effective depth of the reinforced concrete beam in millimeters (mm). 
     :type depth: int/float
 
-    :param length: A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the clear length of the reinforced concrete beam in meters (m). Check :ref:`InputExample:Nodes Details` for more details.
+    :param length: A handle to the :class:`PyRCD.RCbeam.rcb` that detects the clear length of the reinforced concrete beam in meters (m). 
     :type length: int/float 
 
-    :param bending_moment: A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the bending moment on the reinforced concrete beam in kilo-newton-meters (kNm). If the instance is int or float, it is considered as bending moment is only acting at center of the beam and zero moment at the beam's end. If the instance is list, list must represents bending moment at left end, center and right end of the beam with three elements repectively.  Check :ref:`InputExample:Nodes Details` for more details.
+    :param bending_moment: A handle to the :class:`PyRCD.RCbeam.rcb` that detects the bending moment on the reinforced concrete beam in kilo-newton-meters (kNm). If the instance is int or float, it is considered as bending moment is only acting at center of the beam and zero moment at the beam's end. If the instance is list, list must represents bending moment at left end, center and right end of the beam with three elements repectively.  
     :type bending_moment: int/float/list
  
-    :param shear_force: A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the shear forces on the reinforced concrete beam in kilo-newton (kN). If the instance is int or float, the shear force value is considered as same on either end of the beam. If the instance is list, list must represents shear force at left end, center and right end of the beam with three elements repectively.   Check :ref:`InputExample:Nodes Details` for more details.
+    :param shear_force: A handle to the :class:`PyRCD.RCbeam.rcb` that detects the shear forces on the reinforced concrete beam in kilo-newton (kN). If the instance is int or float, the shear force value is considered as same on either end of the beam. If the instance is list, list must represents shear force at left end, center and right end of the beam with three elements repectively.   
     :type shear_force: int/float/list
 
-    :param torsion:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the torsion on the reinforced concrete beam in kilo-newton-meter (kNm). This instance is to be used when user intend to design beam with torsion. Default is None, no torsion is considered. Check :ref:`InputExample:Nodes Details` for more details.
+    :param torsion:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects the torsion on the reinforced concrete beam in kilo-newton-meter (kNm). This instance is to be used when user intend to design beam with torsion. Default is None, no torsion is considered. 
     :type torsion: int/float, optional
 
-    :param defl:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the maximum deflection of the reinforced concrete beam in millimeters (mm). This instance is to be used when user intend to check the deflection limit of the beam. By Default beam is considered safe in deflection. Check :ref:`InputExample:Nodes Details` for more details.
+    :param defl:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects the maximum deflection of the reinforced concrete beam in millimeters (mm). This instance is to be used when user intend to check the deflection limit of the beam. By Default beam is considered safe in deflection. 
     :type defl: int/float, optional
 
-    :param cover:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the effective cover that is to be provided in beam in millimeter  (mm), default is 20mm. This instance is to be used when user intend to change the effective cover of the beam. Check :ref:`InputExample:Nodes Details` for more details.
+    :param cover:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects the effective cover that is to be provided in beam in millimeter  (mm), default is 25mm. This instance is to be used when user intend to change the effective cover of the beam. Check :ref:`InputExample:Nodes Details` for more details.
     :type cover: int/float, optional    
 
-    :param ast_provided:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the reinforcement area provided by user in the reinforced concrete beam in square-millimeter (mm2). If the instance is int or float, it is considered as reinforcement has only been provided in the bottom of the beam. If the instance is list, list must represents rebar areas provided at left end, center and right end of the beam repectively.  Check :ref:`InputExample:Nodes Details` for more details.
+    :param ast_provided:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects the reinforcement area provided by user in the reinforced concrete beam in square-millimeter (mm2). If the instance is int or float, it is considered as reinforcement has only been provided in the bottom of the beam. If the instance is list, list must represents rebar areas provided at left end, center and right end of the beam repectively.  Check :ref:`InputExample:Nodes Details` for more details.
     :type ast_provided: int/float/list
 
-    :param left_support_size:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects width of support size on left end of the beam in mllimeter (mm), default is 400 mm. This instance is used to perform detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
+    :param left_support_size:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects width of support size on left end of the beam in mllimeter (mm), default is 400 mm. This instance is used to perform detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
     :type left_support_size: int/float, optional
 
-    :param right_support_size:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects width of support size on right end of the beam in mllimeter (mm), default is 400 mm. This instance is used to perform detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
+    :param right_support_size:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects width of support size on right end of the beam in mllimeter (mm), default is 400 mm. This instance is used to perform detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
     :type right_support_size: int/float, optional
 
-    :param left_end_continous:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects wheather the beam is continous on the left end or not. Default is False (i.e. Beam is not continous). This instance is used to perform practical detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
+    :param left_end_continous:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects wheather the beam is continous on the left end or not. Default is False (i.e. Beam is not continous). This instance is used to perform practical detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
     :type left_end_continous: boolean, optional
 
-    :param right_end_continous:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects wheather the beam is continous on the right end or not. Default is False (i.e. Beam is not continous). This instance is used to perform practical detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
+    :param right_end_continous:  A handle to the :class:`PyRCD.RCbeam.rcb` that detects wheather the beam is continous on the right end or not. Default is False (i.e. Beam is not continous). This instance is used to perform practical detailing of the beam. Check :ref:`InputExample:Nodes Details` for more details.
     :type right_end_continous: boolean, optionall
 
-    :param side_rebar_depth:  A handle to the :class:`PyRCD.dsgBCS.RCbeam` that detects the depth condition in millimeter (mm) when side reinforcement has to be provided in the beam. Default is 750 mm depth as per IS456:2000. This instance is to be used when user intend to change the depth condition. Check :ref:`InputExample:Nodes Details` for more details.
-    :type side_rebar_depth: int/float, optional
     """
 
-    def __init__(self, width, depth, length,  bending_moment, shear_force, torsion= None,  defl= None, cover= 20, ast_provided= None,  side_rebar_depth= 750, left_support_size= 400, right_support_size= 400, left_end_continous= False, right_end_continous= False):
+    def __init__(self, width, depth, length,  bending_moment, shear_force, torsion= None,  defl= None, cover= 25, ast_provided= None, left_support_size= 400, right_support_size= 400, left_end_continous= False, right_end_continous= False):
 
         if not isinstance(width, (int, float)):
             raise TypeError ("Type of 'width' must be int or float in millimiter (mm)") 
@@ -158,7 +156,7 @@ class rcb():
 
         self.torsion= torsion
 
-        self.side_rebar_depth= side_rebar_depth
+        
         self.side_bar= False
 
         self.left_support_size= left_support_size
@@ -1012,12 +1010,10 @@ class rcb():
         return shear_detail
     
     def beam_optimization(self, nearest_value= 5):
-        """This function of :class:`PyRCD.RCbeam` objects performs reinforced concrete beam design optimization. It minimized the cross-section and along with bars. It also ensure the safety checks. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects performs reinforced concrete beam multi-objective design optimization. It minimizes the cross-section along with bars maintaining the safety checks. 
 
-        :param nearest_value: Name/Index of a member for which shear force and bending moment diagram is to be plotted.
+        :param nearest_value: It round off the cross-section dimension to `nearest_value`. It helps maintain contructability.
         :type element: int/float
-        :return: A list of best solutions, optimized costs along with temperature variation during optimization in :class:`PyRCD.RCbeam` objects.
-        :rtype: List
         """
 
         b_range = np.arange(200, 501,1)
@@ -1346,18 +1342,15 @@ class rcb():
         self.optimization_status= True
 
     def crack_width(self, distance=None, acr= None):
-        """This function of :class:`PyRCD.RCbeam` objects performs crock width calculation for reinforced concrete beam. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects performs crack width calculation for reinforced concrete beam. 
 
         :param distance: distance in millimeter fron center line of beam to a point where crack is to be calculated.
         :type element: int/float
 
         :param acr: distance in millimeter fron center line of beam to a point where crack is to be calculated.
         :type element: int/float        
-        :return: A list of best solutions, optimized costs along with temperature variation during optimization in :class:`PyRCD.RCbeam` objects.
-        :rtype: List
+
         """
-
-
         #distance is the distance from center of beam to point where crack is to be determined
         D= self.total_depth
         Igr= self.b*D*D*D/12
@@ -1445,9 +1438,10 @@ class rcb():
         #     status = 1
 
     def constraint(self):
-        """This function of :class:`PyRCD.RCbeam` objects initialized the safety checks as constraints for design and optimization of RC beam. By default, it is set as per Indian Standard IS456:2000. It can be canged as per the guideline user aim to follow. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects initialized the **safety checks** as constraints for design and optimization of RC beam. By default, it is set as per Indian Standard IS456:2000. It can be canged as per the guideline user aim to follow. 
 
         :param: None
+        :WARNING: Do not change the variable names
         """
         self.fck= 25                            # Grade of Concrete in N/mm2    i.e. M25
         self.fy= 500                            # Grade of Reinforcement Bar Steel in N/mm2    i.e. Fe500
@@ -1477,6 +1471,7 @@ class rcb():
         self.ast_max = (4*self.b*self.d) / 100                                        #Reinforcement Bar Maximum Limit
         self.lateral_stability= min([(60*self.b),(250*self.b*self.b/self.d)])           #Lateral Stability Check
 
+        self.side_rebar_depth= 750                          # Depth above which torsion rebar is required
         # Design Shear Strength Table
         tc_table = {'pt':[0.15,0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.25,2.5,2.75,3],
             '20':[0.28,0.36,0.48,0.56,0.62,0.67,0.72,0.75,0.79,0.81,0.82,0.82,0.82],
@@ -1508,9 +1503,11 @@ class rcb():
         self.bond_stress_pd= pd.DataFrame(bond_stress, columns=["Deformed Bar"], index=[20,25,30,35,40] )
 
     def mulim_ast_calculation(self,Mu,BMC,BML,BMR):
-        """This function of :class:`PyRCD.RCbeam` objects calculates the reinforcement area required. By default, it is set as per Indian Standard IS456:2000. It can be canged as per the guideline user aim to follow. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects calculates the reinforcement area required. By default, it is set as per Indian Standard IS456:2000. It can be canged as per the guideline user aim to follow. 
 
         :param: None
+
+        :Note: Calculation for determination of moment capacity and steel area can be change as per user requirement. Avoid changing variable name `self.Ast`.
         """
         fy= self.fy
         fc= self.fck
@@ -1577,9 +1574,11 @@ class rcb():
         
 
     def ld_calculation(self):
-        """This function of :class:`PyRCD.RCbeam` objects calculates the anchorage / development length of top and bottom bars in the design and optimization of RC beam. By default, it is set as per Indian Standard IS456:2000. It can be canged as per the guideline user aim to follow. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects calculates the anchorage / development length of top and bottom bars in the design and optimization of RC beam. By default, it is set as per Indian Standard IS456:2000. It can be canged as per the guideline user aim to follow. 
 
         :param: None
+
+        :Note: Calculation for determination of development length can be changed as per user requirement. Avoid changing the variable names.
         """
         rebar_top= self.rebar_detail.iloc[1:,5:12].to_numpy()
         rebar_bottom= self.rebar_detail.iloc[0,5:12].to_numpy()
@@ -1619,9 +1618,10 @@ class rcb():
  
 
     def rebar_config(self):
-        """This function of :class:`PyRCD.RCbeam` objects initialized reinforcement bars for the design and optimization of reinforced concrete beam seperatly for tension and shear forces. By default, it is set as per Indian Market. It can be canged as per the guideline user. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects initialized reinforcement bars for the design and optimization of reinforced concrete beam seperatly for tension and shear forces. By default, it is set as per Indian Market. It can be canged as per the guideline user. 
 
         :param: None
+        :Note: Avoid changing the variable names.
         """
         rebar_size= [10,12,16,20,25,32]             # Diameter of rebars as per Indian Market 
 
@@ -1675,9 +1675,11 @@ class rcb():
 
 
     def constructability(self):
-        """This function of :class:`PyRCD.RCbeam` objects initialized constructability parameter for the design and optimization of reinforced concrete beam. By default, it is set as per Indian Market. It can be canged as per the guideline user. 
+        """This function of :class:`PyRCD.RCbeam.rcb` objects initialized constructability parameter for the design and optimization of reinforced concrete beam. By default, it is set as per Indian Market. It can be canged as per the guideline user. 
 
         :param: None
+
+        :Note: Avoid changing the variable names.
         """
 
         # --------------DO NOT CHANGE NAME OF VARIABLES---------------

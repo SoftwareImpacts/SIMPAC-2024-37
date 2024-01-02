@@ -1,7 +1,4 @@
-.. StrucPy documentation master file, created by
-   sphinx-quickstart on Sat May 27 11:48:43 2023.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
+.. StrucPy documentation master file
 
 Welcome to PyRCD's documentation!
 ===================================
