@@ -1,13 +1,11 @@
 # PyRCD
 
-**PyRCD** is a powerful python library for design and multiobjective design optimization of reinforced concrete(RC) elements. PyRCD is originally developed for the students and researchers working in field of civil engineering. It will be highly helpful for research in design optimization, designing, and visualizing the detailing of RC beam. It is also highly beneficial for the learning process for graduate students. 
+**PyRCD** is a powerful Python library for design and multiobjective design optimization of reinforced concrete(RC) elements. PyRCD is originally developed for the students and researchers working in field of civil engineering. It is highly helpful for research in design optimization, and visualizing the detailing of RC beam. It is also highly beneficial for the graduate students to enhance the learning process in structural designing. 
 
 ------------------------------------------------------------------------------------------------------------
 ## Modules 
 
 * **RCbeam** - Structural design and multi-objective optimization of reinforced concrete beams 
-* **RCcolumn** - (Under Development)
-
 ------------------------------------------------------------------------------------------------------------
 
 ## Project Objectives
