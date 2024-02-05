@@ -189,26 +189,34 @@ class rcb():
         if self.ast_provided_type== 0:
             if self.Ast_center < self.Ast[0]:
                 self.beam_status[["Rebar_Check"]] = "Fail"
+                print ("* Beam failed in reinforcement check. Provided rebar area is less than required rebar area at bottom-center of the beam.")
             else: 
                 self.beam_status[["Rebar_Check"]]= "Pass"
 
         if self.ast_provided_type== 1:
             if self.Ast_center < self.Ast[0]:
                 self.beam_status[["Rebar_Check"]] = "Fail"
+                print ("* Beam failed in reinforcement check. Provided rebar area is less than required rebar area at bottom-center of the beam.")
             else: 
                 self.beam_status[["Rebar_Check"]]= "Pass"
 
             if self.Ast_left < self.Ast[1]:
                 self.beam_status[["Rebar_Check"]] = "Fail"
+                print ("* Beam failed in reinforcement check. Provided rebar area is less than required rebar area at top-left of the beam.")
             else: 
                 self.beam_status[["Rebar_Check"]]= "Pass"
 
             if self.Ast_right < self.Ast[2]:
-                self.beam_status[["Rebar_Check"]] = "Fail"           
+                self.beam_status[["Rebar_Check"]] = "Fail" 
+                print ("* Beam failed in reinforcement check. Provided rebar area is less than required rebar area at top-right of the beam.")          
             else: 
                 self.beam_status[["Rebar_Check"]]= "Pass"
         
         self.__shear_check()
+
+        if self.beam_status.iat[0,5] == "Fail": 
+                print ("* Beam failed in shear check. Increase the grade of concrete or width of the RC beam.")          
+
         self.rebar_detail= "Designing Not done. Please perform Design first."
         self.shear_detail= "Designing Not done. Please perform Design first."
 
@@ -223,18 +231,18 @@ class rcb():
 
         if self.status == 0:
             if self.beam_status.iloc[0,0] == "Fail":
-                print ("Beam failed in deflection. Increase the depth of the beam")
+                print ("* Beam failed in deflection. Increase the depth of the beam")
 
             if self.beam_status.iloc[0,1] == "Fail":
-                print ("Beam failed in lateral statbility. Increase the width of the beam.")
+                print ("* Beam failed in lateral statbility. Increase the width of the beam.")
 
             if self.beam_status.iloc[0,2] == "Fail":
-                print ("Beam failed in moment check. More depth and width is required, increase the depth or width of the beam.")
+                print ("* Beam failed in moment check. More depth is required, increase the depth of the beam.")
 
             if self.beam_status.iloc[0,4] == "Fail":
-                print ("Beam failed in reinforcement requirement as its more than the maximum limit. More depth or width is required, increase the depth or width or grade of concrete or grade of steel of the beam.")
+                print ("* Beam failed in reinforcement requirement as its more than the maximum limit. \n   More depth is required, increase the depth or grade of concrete or grade of steel of the beam.")
 
-            raise Exception(" Beam design has failed in the safety checks. Increase the dimension of the RC beam.")
+            raise Exception("* Beam design has failed in the safety checks. Please follow the above suggestions to ensure the safety of the RC beam.")
 
         self.__rebars_design()
         self.beam_status[["Rebar_Check"]]= "Pass"
